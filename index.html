@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Камінь-ножиці-папір</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: url('background.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: #333;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .welcome-box {
+      background: rgba(255, 255, 255, 0.9);
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      text-align: center;
+      margin: 15vh auto;
+    }
+
+    .welcome-box h1 {
+      font-size: 2em;
+      margin-bottom: 10px;
+    }
+
+    .welcome-box p {
+      font-size: 1.1em;
+      margin-bottom: 20px;
+    }
+
+    input[type="text"] {
+      padding: 10px 20px;
+      border: 1px solid #ccc;
+      border-radius: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+      outline: none;
+      font-size: 1em;
+      width: 60%;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 25px;
+      border: none;
+      border-radius: 25px;
+      background-color: #4CAF50;
+      color: white;
+      font-size: 1em;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    button:hover:enabled {
+      background-color: #45a049;
+      transform: scale(1.05);
+    }
+
+    button:disabled {
+      background-color: #bbb;
+      cursor: not-allowed;
+    }
+
+    .game-box {
+      background: rgba(255, 255, 255, 0.85);
+      padding: 30px;
+      border-radius: 20px;
+      margin-top: 40px;
+      transition: opacity 0.5s ease;
+    }
+
+    .inactive {
+      pointer-events: none;
+      opacity: 0.5;
+    }
+
+    .players {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 20px;
+    }
+
+    .player {
+      text-align: center;
+    }
+
+    .player-box {
+      width: 120px;
+      height: 120px;
+      background-color: #ccc;
+      border-radius: 15px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .player-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 15px;
+    }
+
+    .difficulty-buttons, .choice-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .choice-buttons img {
+      width: 60px;
+      cursor: pointer;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    .choice-buttons img:hover {
+      transform: scale(1.1);
+      border: 2px solid #4CAF50;
+    }
+
+    .result-message {
+      text-align: center;
+      font-size: 1.2em;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+
+    .win {
+      transform: scale(1.1);
+      border: 5px solid;
+      border-radius: 20px;
+      border-image: linear-gradient(to right, #03A791, #81E7AF) 1;
+    }
+
+    .lose {
+      transform: scale(0.95);
+      border: 5px solid;
+      border-radius: 20px;
+      border-image: linear-gradient(to right, #EB5A3C, #DF9755) 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Вітальний екран -->
+    <div class="welcome-box">
+      <h1>Ласкаво просимо до гри "Камінь, ножиці, папір"!</h1>
+      <p>Введіть своє ім’я та натисніть кнопку нижче, щоб почати гру проти Mr. Python.</p>
+      <input type="text" id="playerName" placeholder="Введіть ім'я">
+      <br>
+      <button id="startGame" disabled>Почати гру</button>
+    </div>
+
+    <!-- Блок гри -->
+    <div class="game-box inactive" id="gameSection">
+      <div class="players">
+        <div class="player">
+          <div class="player-box" id="playerBox"></div>
+          <p id="playerLabel">Гравець</p>
+        </div>
+        <div class="player">
+          <div class="player-box" id="botBox"></div>
+          <p>Mr. Python</p>
+        </div>
+      </div>
+
+      <div class="difficulty-buttons">
+        <button onclick="setDifficulty('easy')">Легко</button>
+        <button onclick="setDifficulty('medium')">Середньо</button>
+        <button onclick="setDifficulty('hard')">Складно</button>
+      </div>
+
+      <div class="choice-buttons">
+        <img src="rock.png" onclick="makeChoice('rock')" alt="Камінь">
+        <img src="paper.png" onclick="makeChoice('paper')" alt="Папір">
+        <img src="scissors.png" onclick="makeChoice('scissors')" alt="Ножиці">
+      </div>
+
+      <div class="result-message" id="resultMessage"></div>
+      <div style="text-align: center;">
+        <button onclick="resetGame()">Нова гра</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const playerInput = document.getElementById('playerName');
+    const startBtn = document.getElementById('startGame');
+    const gameSection = document.getElementById('gameSection');
+    const playerBox = document.getElementById('playerBox');
+    const botBox = document.getElementById('botBox');
+    const resultMessage = document.getElementById('resultMessage');
+    const playerLabel = document.getElementById('playerLabel');
+
+    let difficulty = null;
+    let playerName = "";
+
+    playerInput.addEventListener('input', () => {
+      startBtn.disabled = !playerInput.value.trim();
+    });
+
+    startBtn.addEventListener('click', () => {
+      playerName = playerInput.value.trim();
+      playerLabel.textContent = playerName;
+      gameSection.classList.remove('inactive');
+      document.querySelector('.welcome-box').scrollIntoView({ behavior: 'smooth' });
+      setTimeout(() => {
+        gameSection.scrollIntoView({ behavior: 'smooth' });
+      }, 500);
+    });
+
+    function setDifficulty(level) {
+      difficulty = level;
+      document.querySelectorAll('.choice-buttons img').forEach(btn => {
+        btn.style.pointerEvents = 'auto';
+        btn.style.opacity = '1';
+      });
+    }
+
+    function makeChoice(playerChoice) {
+      if (!difficulty) return;
+
+      playerBox.innerHTML = `<img src="${playerChoice}.png" alt="${playerChoice}">`;
+      resultMessage.textContent = "Обробка ходу...";
+      botBox.innerHTML = '';
+
+      setTimeout(() => {
+        const botChoice = getBotChoice(playerChoice);
+        botBox.innerHTML = `<img src="${botChoice}.png" alt="${botChoice}">`;
+
+        const result = getResult(playerChoice, botChoice);
+        resultMessage.textContent = result.text;
+
+        if (result.winner === 'player') {
+          playerBox.classList.add('win');
+          botBox.classList.add('lose');
+        } else if (result.winner === 'bot') {
+          playerBox.classList.add('lose');
+          botBox.classList.add('win');
+        } else {
+          playerBox.classList.remove('win', 'lose');
+          botBox.classList.remove('win', 'lose');
+        }
+
+      }, 3000);
+    }
+
+    function getBotChoice(playerChoice) {
+      const choices = ['rock', 'paper', 'scissors'];
+      let win, tie, lose;
+
+      if (difficulty === 'easy') {
+        [win, tie, lose] = [0.7, 0.2, 0.1];
+      } else if (difficulty === 'medium') {
+        [win, tie, lose] = [0.2, 0.3, 0.5];
+      } else {
+        [win, tie, lose] = [0.45, 0.15, 0.4];
+      }
+
+      const rand = Math.random();
+      if (rand < win) return loseTo(playerChoice);
+      else if (rand < win + tie) return playerChoice;
+      else return beat(playerChoice);
+    }
+
+    function beat(choice) {
+      return choice === 'rock' ? 'paper' : choice === 'paper' ? 'scissors' : 'rock';
+    }
+
+    function loseTo(choice) {
+      return choice === 'rock' ? 'scissors' : choice === 'paper' ? 'rock' : 'paper';
+    }
+
+    function getResult(player, bot) {
+      if (player === bot) return { text: "Схоже у нас нічия!", winner: "none" };
+      if (beat(bot) === player) return { text: `Вітаю, ${playerName}, ви виграли!`, winner: "player" };
+      return { text: "Оу, схоже Mr. Python виграв!", winner: "bot" };
+    }
+
+    function resetGame() {
+      playerBox.innerHTML = '';
+      botBox.innerHTML = '';
+      resultMessage.textContent = '';
+      playerBox.className = 'player-box';
+      botBox.className = 'player-box';
+      difficulty = null;
+    }
+
+    // Ініціально кнопки вибору неактивні
+    document.querySelectorAll('.choice-buttons img').forEach(btn => {
+      btn.style.pointerEvents = 'none';
+      btn.style.opacity = '0.4';
+    });
+  </script>
+</body>
+</html>
